@@ -7,3 +7,17 @@ Backend: Node JS, MongoDB
 3. npm install mongodb
 
 4. npx tsc --init
+
+5. npm install mongoose
+
+Run:
+
+1. npm tsx
+
+2. node dict/server.js
+
+For API Endpoint:
+
+1. npm install express
+
+2. npm install -D @types/express
