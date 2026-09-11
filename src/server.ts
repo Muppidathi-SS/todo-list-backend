@@ -4,7 +4,7 @@ import { User } from "./models/user.model";
 
 const app = express();
 
-const PORT = 5000;
+const PORT = process.env.PORT;
 
 app.get("/getcheck", async (req, res) => {
   try {
