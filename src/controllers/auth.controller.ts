@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { User } from "../models/user.model";
 
 export const register = async (req: Request, res: Response) => {
@@ -63,7 +64,10 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    const isPasswordMatch = await bcrypt.compare(userPassword, user.userPassword);
+    const isPasswordMatch = await bcrypt.compare(
+      userPassword,
+      user.userPassword,
+    );
     if (!isPasswordMatch) {
       return res.status(400).json({
         message: "Invalid email or password",
@@ -72,10 +76,27 @@ export const login = async (req: Request, res: Response) => {
 
     console.log("LOGGED IN USER:", user.userEmail);
 
+    const token = jwt.sign(
+      {
+        id: user._id,
+        userName: user.userName,
+        userEmail: user.userEmail,
+      },
+      process.env.JWT_SECRET as string,
+      {
+        expiresIn: (process.env.JWT_EXPIRES_IN as any) || "1h",
+      },
+    );
+
     return res.status(200).json({
       message: "Login successful",
+      id: user._id,
+      userName: user.userName,
+      userEmail: user.userEmail,
+      token,
       user: {
         _id: user._id,
+        id: user._id,
         userName: user.userName,
         userEmail: user.userEmail,
       },
