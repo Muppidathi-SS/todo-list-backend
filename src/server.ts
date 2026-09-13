@@ -1,21 +1,17 @@
+import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import { connectDB } from "./config/db";
-import { User } from "./models/user.model";
+import Routes from "./routes/routes";
 
 const app = express();
 
-const PORT = process.env.PORT;
+app.use(express.json());
+app.use(cors());
 
-app.get("/getcheck", async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch data",
-    });
-  }
-});
+app.use("/api", Routes);
+
+const PORT = process.env.PORT;
 
 const startServer = async () => {
   await connectDB();
