@@ -22,11 +22,11 @@ export const authenticateToken = (
   }
 
   try {
-    const decoded = jwt.verify(
-      token,
-      (process.env.JWT_SECRET as string) ||
-        "todo_jwt_secret_key_super_secure_2026",
-    ) as { id: string; userName: string; userEmail: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+      id: string;
+      userName: string;
+      userEmail: string;
+    };
     req.user = decoded;
     next();
   } catch (err) {

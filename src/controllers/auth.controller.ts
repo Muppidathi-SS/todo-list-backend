@@ -82,8 +82,7 @@ export const login = async (req: Request, res: Response) => {
         userName: user.userName,
         userEmail: user.userEmail,
       },
-      (process.env.JWT_SECRET as string) ||
-        "todo_jwt_secret_key_super_secure_2026",
+      process.env.JWT_SECRET as string,
       {
         expiresIn: (process.env.JWT_EXPIRES_IN as any) || "1h",
       },
