@@ -78,17 +78,11 @@ export const updateTodo = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId || req.body.userId || req.body.id;
     const todoId = req.params.todoId || req.body.todoId || req.body._id;
-    const { isCompleted } = req.body;
+    const { taskName, isCompleted } = req.body;
 
     if (!todoId) {
       return res.status(400).json({
         message: "Todo ID is required",
-      });
-    }
-
-    if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        message: "Invalid User ID format",
       });
     }
 
@@ -98,14 +92,32 @@ export const updateTodo = async (req: Request, res: Response) => {
       });
     }
 
-    const completed =
-      typeof isCompleted === "boolean"
-        ? isCompleted
-        : isCompleted === "true" || isCompleted === true;
+    if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        message: "Invalid User ID format",
+      });
+    }
 
-    const query: Record<string, any> = {
+    const updateFields: Record<string, unknown> = {};
+
+    if (typeof taskName === "string" && taskName.trim()) {
+      updateFields["todos.$.taskName"] = taskName.trim();
+    }
+
+    if (typeof isCompleted === "boolean") {
+      updateFields["todos.$.isCompleted"] = isCompleted;
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({
+        message: "No fields to update",
+      });
+    }
+
+    const query: Record<string, string> = {
       "todos._id": todoId,
     };
+
     if (userId) {
       query.userId = userId;
     }
@@ -113,13 +125,10 @@ export const updateTodo = async (req: Request, res: Response) => {
     const todo = await Todo.findOneAndUpdate(
       query,
       {
-        $set: {
-          "todos.$.isCompleted": completed,
-        },
+        $set: updateFields,
       },
       {
         new: true,
-        returnDocument: "after",
       },
     );
 
@@ -138,6 +147,73 @@ export const updateTodo = async (req: Request, res: Response) => {
 
     return res.status(500).json({
       message: "Failed to update todo",
+    });
+  }
+};
+
+type TodoParams = {
+  userId: string;
+  todoId: string;
+};
+export const deleteTodo = async (req: Request<TodoParams>, res: Response) => {
+  try {
+    const userId = req.params.userId || req.body.userId || req.body.id;
+    const { todoId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required",
+      });
+    }
+
+    if (!todoId) {
+      return res.status(400).json({
+        message: "Todo ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        message: "Invalid User ID format",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(todoId)) {
+      return res.status(400).json({
+        message: "Invalid Todo ID format",
+      });
+    }
+
+    const todo = await Todo.findOneAndUpdate(
+      {
+        userId,
+        "todos._id": todoId,
+      },
+      {
+        $pull: {
+          todos: { _id: todoId },
+        },
+      },
+      {
+        new: true,
+      },
+    );
+
+    if (!todo) {
+      return res.status(404).json({
+        message: "Todo not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Todo deleted successfully",
+      todo,
+    });
+  } catch (error) {
+    console.error("Delete Todo Error:", error);
+
+    return res.status(500).json({
+      message: "Failed to delete todo",
     });
   }
 };
